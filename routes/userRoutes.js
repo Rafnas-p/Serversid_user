@@ -16,4 +16,5 @@ router.delete('/removeCartitem/:productId',authMiddilware,userController.removeC
 router.post('/order',authMiddilware,userController.createOrder)
 router.post('/order/verify',authMiddilware, userController.verifypayment)
 router.get('/order/deatils',authMiddilware,userController.orderDeatails)
+
 module.exports = router;

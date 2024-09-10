@@ -21,6 +21,7 @@ module.exports = (req, res, next) => {
     }
 
     req.userId = decoded.id;
+    req.isAdmin= decoded.isAdmin
     next();
   });
 };
