@@ -9,9 +9,12 @@ router.get('/products',userController.gettAllproducts)
 router.get('/products/:type',userController.productsBytype)
 router.get('/product/:productId',userController.getproductById)
 router.post('/cart/add',authMiddilware,userController.addToCart);
-router.get('/getCartItem',authMiddilware,userController.getCartItem)
+router.post('/updateCartItemQuantity', authMiddilware,userController.updateCartItemQuantity);
+
+router.post('/getCartItem', authMiddilware, userController.getCartItem);
 router.post('/wishlist/add',authMiddilware,userController.wishliste)
-router.get('/gettwishlist/',authMiddilware,userController.getWishlist)
+router.get('/gettwishlist',authMiddilware,userController.getWishlist)
+router.delete('/removewishlist/:productId',authMiddilware,userController.removewishlist)
 router.delete('/removeCartitem/:productId',authMiddilware,userController.removeCartitem)
 router.post('/order',authMiddilware,userController.createOrder)
 router.post('/order/verify',authMiddilware, userController.verifypayment)

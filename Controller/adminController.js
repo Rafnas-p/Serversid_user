@@ -32,8 +32,11 @@ exports.admiLogin = async (req, res) => {
 
 exports.viewAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, { password: 0 });
-    res.status(200).json({ users });
+    const isAdmin = req.isAdmin;
+    if (isAdmin) {
+      const users = await User.find({}, { password: 0 });
+      return res.status(200).json({ users });
+    }
   } catch (error) {
     res.status(500).json({ message: error, error: "users not found" });
   }
@@ -48,9 +51,9 @@ exports.getUserById = async (req, res) => {
     const user = await User.findById(userId);
     console.log("user", user);
     if (!user) {
-      res.status(400).json({ message: "user Not found" });
+      return res.status(400).json({ message: "user Not found" });
     }
-    res.status(200).json({ user });
+    return res.status(200).json({ user });
   } catch (error) {
     res
       .status(500)
@@ -79,12 +82,13 @@ exports.getPrByCt = async (req, res) => {
     console.log(products);
 
     if (products) {
-      res.status(200).json(products);
+      return res.status(200).json(products);
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 //View a specific product.
 exports.getProductById = async (req, res) => {
   try {
@@ -93,9 +97,9 @@ exports.getProductById = async (req, res) => {
     console.log(_id);
 
     if (!Product) {
-      res.status(404).json({ message: "product not found" });
+      return res.status(404).json({ message: "product not found" });
     }
-    res.status(200).json(product);
+    return res.status(200).json(product);
   } catch (error) {
     res
       .status(500)
@@ -106,7 +110,8 @@ exports.getProductById = async (req, res) => {
 exports.creatProduct = async (req, res) => {
   try {
     const { error } = joiCreateProductSchema.validate(req.body);
-    if (error) res.status(404).json({ message: error.details[0].message });
+    if (error)
+      return res.status(404).json({ message: error.details[0].message });
 
     const { name, description, price, image, type, stars } = req.body;
 
@@ -136,9 +141,9 @@ exports.deleatProduct = async (req, res) => {
 
     const product = await Product.findByIdAndDelete(id);
     if (!product) {
-      res.status(404).json({ message: "product not found" });
+      return res.status(404).json({ message: "product not found" });
     } else {
-      res.status(200).json({ message: "Product deleat succesfully" });
+      return res.status(200).json({ message: "Product deleat succesfully" });
     }
   } catch (error) {
     res.status(500).json({ message: "Failed", error: error.message });
@@ -182,87 +187,85 @@ exports.totalProductPurchased = async (req, res) => {
   }
 };
 
-
 //Total revenue generated
 exports.totalRevenue = async (req, res) => {
+  try {
+    const totalRevenue = await Order.aggregate([
+      { $group: { _id: null, totalRevenue: { $sum: "$totalPrice" } } },
+    ]);
+    console.log("totalrevenue", totalRevenue);
 
-  try{
-  const totalRevenue = await Order.aggregate([
-    { $group: { _id: null, totalRevenue: { $sum: "$totalPrice" } } },
-  ]);
-  console.log("totalrevenue", totalRevenue);
-
-  // Aggregate revenue by month
-  const monthlyRevenue = await Order.aggregate([
-    {
-      $group: {
-        _id: { $month: "$purchaseDate" },
-        revenue: { $sum: "$totalPrice" }
-      }
-    },
-    { $sort: { _id: 1 } },
-    {
-      $project: {
-        month: {
-          $dateToString: {
-            format: "%B",
-            date: {
-              $dateFromParts: {
-                year: { $year: new Date() },
-                month: "$_id"
-              }
-            }
-          }
+    // Aggregate revenue by month
+    const monthlyRevenue = await Order.aggregate([
+      {
+        $group: {
+          _id: { $month: "$purchaseDate" },
+          revenue: { $sum: "$totalPrice" },
         },
-        revenue: 1,
-        _id: 0
-      }
-    }
-  ]);
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          month: {
+            $dateToString: {
+              format: "%B",
+              date: {
+                $dateFromParts: {
+                  year: { $year: new Date() },
+                  month: "$_id",
+                },
+              },
+            },
+          },
+          revenue: 1,
+          _id: 0,
+        },
+      },
+    ]);
 
-  // Send response
-  res.status(200).json({
-    totalRevenue: totalRevenue[0]?.totalRevenue || 0,
-    monthly: monthlyRevenue
-  });
-} catch (error) {
-  console.error("Error fetching revenue data:", error);
-  res.status(500).json({ message: error.message, error: error });
-}
-        
-}
+    // Send response
+    res.status(200).json({
+      totalRevenue: totalRevenue[0]?.totalRevenue || 0,
+      monthly: monthlyRevenue,
+    });
+  } catch (error) {
+    console.error("Error fetching revenue data:", error);
+    res.status(500).json({ message: error.message, error: error });
+  }
+};
+
 //Order Details
 
-exports.OrderDetails=async(req,res)=>{
-
-  try{
-  const orderDeatails=await Order.find()
-  if (!orderDeatails){
-    res.status(404).json({message:"order deatails not found"})
+exports.OrderDetails = async (req, res) => {
+  try {
+    const orderDeatails = await Order.find();
+    if (!orderDeatails) {
+      return res.status(404).json({ message: "order deatails not found" });
+    }
+    return res.status(200).json(orderDeatails);
+  } catch {
+    res.status(500).json({ message: " message: error.message, error: error" });
   }
-  res.status(200).json(orderDeatails)
-  }catch{
-res.status(500).json({message:" message: error.message, error: error"})
-  }
-}
+};
 
 //oder details by user
-exports.orderDeatailsByUser=async (req,res)=>{
+exports.orderDeatailsByUser = async (req, res) => {
   try {
-    const {userId}=req.params;
-    const orders=await Order.find({userId, paymentStatus: "Completed"}) .populate({
-      path: 'products.productId',
-      select: 'name description price image category stars' 
+    const { userId } = req.params;
+    const orders = await Order.find({
+      userId,
+      paymentStatus: "Completed",
+    }).populate({
+      path: "products.productId",
+      select: "name description price image category stars",
     });
-    console.log('orde',orders);
-    if (! orders|| orders.length === 0) {
+    console.log("orde", orders);
+    if (!orders || orders.length === 0) {
       return res.status(404).json({ message: "Order details not found" });
     }
 
-    res.status(200).json(orders);
+    return res.status(200).json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message, error: error });
+    return res.status(500).json({ message: error.message, error: error });
   }
-    
-  
-}
+};

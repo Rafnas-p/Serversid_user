@@ -7,17 +7,13 @@ const joiRegisterScema = joi.object({
   password: joi.string().min(4).required(),
 });
 
-module.exports = {
-  joiRegisterScema,
-};
-//joi loginScema
-const joiLoginScema=joi.object({
+// Joi login schema
+const joiLoginScema = joi.object({
   email: joi.string().email().required(),
   password: joi.string().min(4).required(),
-})
-module.exports={joiLoginScema};
+});
 
-//// Product validaation schema
+// Product validation schema
 const joiCreateProductSchema = joi.object({
   name: joi.string().required(),
   description: joi.string().required(),
@@ -27,4 +23,8 @@ const joiCreateProductSchema = joi.object({
   stars: joi.number().required().min(0).max(5)
 });
 
-module.exports={joiCreateProductSchema}
+module.exports = {
+  joiRegisterScema,
+  joiLoginScema,
+  joiCreateProductSchema
+};

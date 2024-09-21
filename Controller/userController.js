@@ -7,6 +7,7 @@ const Cart = require("../models/cartModal");
 const Wishlist = require("../models/whishlistModal");
 const Razorpay = require("razorpay");
 const Order = require("../models/oderSchema");
+const mongoose = require('mongoose');
 require("dotenv").config();
 
 // User registration
@@ -38,6 +39,30 @@ exports.register = async (req, res) => {
 };
 
 //login section
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
+
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(400).json({ message: "Invalid email" });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Invalid password" });
+//     }
+
+  
+//     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+//     res.status(200).json({ message: "Login successful", token });
+//   } catch (error) {
+//     return res.status(500).json({ status: "failed", message: error.message });
+//   }
+// };
+
+
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,13 +77,21 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-  
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
-    res.status(200).json({ message: "Login successful", token });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      user: { id: user._id, email: user.email },
+    });
   } catch (error) {
-    return res.status(500).json({ status: "failed", message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
+
+
+
+
+
 //getAll product
 
 exports.gettAllproducts = async (req, res) => {
@@ -107,7 +140,7 @@ exports.getproductById = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const userId=req.userId;
-    console.log('uniq',userId);
+    console.log(userId);
     
     const { productId } = req.body;
 
@@ -139,23 +172,45 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-//get Cart item
+// // get Cart item
+// exports.getCartItem = async (req, res) => {
+//   try {
+    
+//     // const { userId } = req.params;
+//     const { userId } = req.body;
+//     // Read userId from query parameters
+//     console.log('id26',userId);
+    
+
+//     const cart = await Cart.findOne({ userId }).populate("products.productId");
+//     console.log(cart);
+
+//     if (!cart) {
+//       return res.status(404).json({ message: "cart not found" });
+//     }
+//     res.status(200).json(cart.products);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 exports.getCartItem = async (req, res) => {
   try {
-    const userId=req.userId
-    // const { userId } = req.params;
+    const { userId } = req.body; // Read userId from request body
+    console.log('userId received:', userId);
 
-    const cart = await Cart.findOne({ userId }).populate("products.productId");
-    console.log(cart);
+    const cart = await Cart.findOne({ userId }).populate('products.productId');
+    console.log('Cart found:', cart);
 
     if (!cart) {
-      return res.status(404).json({ message: "cart not found" });
+      return res.status(404).json({ message: 'Cart not found' });
     }
     res.status(200).json(cart.products);
   } catch (error) {
+    console.error('Error fetching cart items:', error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 //deleat cart quntyty
 
@@ -163,7 +218,7 @@ exports.removeCartitem = async (req, res) => {
   try {
     const userId=req.userId
     const { productId } = req.params;
-    // console.log("userdtail", userId, productId);
+    
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
@@ -184,42 +239,89 @@ exports.removeCartitem = async (req, res) => {
   }
 };
 
-//add whish list
+exports.updateCartItemQuantity = async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    
+    
+    const userId = req.userId; 
 
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    // Find the product in the cart
+    const productIndex = cart.products.findIndex(item => item.productId.toString() === productId.toString());
+
+    if (productIndex === -1) {
+      return res.status(404).json({ message: 'Product not found in cart' });
+    }
+
+    // Update the quantity
+    cart.products[productIndex].quantity += quantity;
+
+    // Save the updated cart
+    if(cart.products[productIndex].quantity>0){
+
+      await cart.save();
+    }else{
+      cart.products[productIndex].quantity =1
+      await cart.save()
+    }
+
+    res.status(200).json({ message: 'Cart item updated successfully', cart });
+  } catch (error) {
+    console.error('Error updating cart item quantity:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add to wishlist
 exports.wishliste = async (req, res) => {
   try {
-    const userId=req.userId;
-    console.log('decodeduserid',userId);
+    const userId = req.userId;
     
-    const {  productId } = req.body;
-    console.log("pro", productId);
-
+    
+    const { productId } = req.body;
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required." });
+    }
+    
+    
+    const productObjectId = new mongoose.Types.ObjectId(productId);
     let wishlist = await Wishlist.findOne({ userId: userId });
-
+  
+    
     if (!wishlist) {
-      wishlist =  new Wishlist({ userId: userId, products: [productId] })
+      wishlist = new Wishlist({ userId: userId, products: [productObjectId] });
+      await wishlist.validate(); 
       await wishlist.save();
-      console.log("newwish", wishlist);
+      console.log("new wishlist", wishlist);
+      return res.status(200).json({ message: "Product added to wishlist", wishlist });
     } else {
-      const productIndex = wishlist.products.findIndex((product)=>product.equals(productId));
+      // Filter out null values and check for the product's index
+      const productIndex = wishlist.products.filter(product => product !== null).findIndex((product) => product.equals(productObjectId));
 
       if (productIndex !== -1) {
-        wishlist.products.splice(productIndex, 1);
+        wishlist.products.splice(productIndex, 1); // Remove the product
         await wishlist.save();
-        return res
-          .status(200)
-          .json({ message: "Product removed from wishlist", wishlist });
+        return res.status(200).json({ message: "Product removed from wishlist", wishlist });
       } else {
-        wishlist.products.push(productId);
+        wishlist.products.push(productObjectId); // Add the product
       }
     }
 
-    await wishlist.save();
+    await wishlist.save(); // Save the updated wishlist
+    console.log('updated wishlist', wishlist);
+    
     res.status(200).json({ message: "Product added to wishlist", wishlist });
   } catch (error) {
+    console.error('Error updating wishlist:', error);
     res.status(500).json({ message: "Error updating wishlist", error });
   }
-};
+}
+
 
 //get wishlist items
 
@@ -227,7 +329,7 @@ exports.getWishlist = async (req, res) => {
   try {
     const userId=req.userId;
 
-    const wishlist = await Wishlist.findOne({ userId: userId }).populate( "products");
+    const wishlist = await Wishlist.findOne({ userId: userId }).populate("products");
     console.log("wish", wishlist);
 
     if (!wishlist) {
@@ -238,6 +340,43 @@ exports.getWishlist = async (req, res) => {
     res.status(500).json({ massege: "Error fetching wishlist", error });
   }
 };
+
+exports.removewishlist = async (req, res) => {
+  try {
+    const userId = req.userId;
+    
+    
+    const { productId } = req.params;
+
+    // Find the wishlist by userId
+    const wishlist = await Wishlist.findOne({ userId });
+    
+    if (!wishlist) {
+      return res.status(404).json({ message: "Wishlist not found" });
+    }
+
+    // Find the index of the product in the wishlist products array
+    const productIndex = wishlist.products.findIndex((product) => 
+      product.equals(productId)  // Compare productId, not wishlist id
+    );
+
+    if (productIndex === -1) {
+      return res.status(404).json({ message: "Product not found in wishlist" });
+    }
+
+    // Remove the product from the wishlist
+    wishlist.products.splice(productIndex, 1);
+
+    // Save the updated wishlist
+    await wishlist.save();
+
+    return res.status(200).json({ message: "Wishlist item deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 //creat order
 exports.createOrder = async (req, res) => {
@@ -300,9 +439,7 @@ exports.createOrder = async (req, res) => {
 
     res.status(200).json({
       message: "Order created successfully",
-      order: newOrder,
-      razorpayOrderId: razorpayOrder.id,
-      
+      order: newOrder,  
     });
   } catch (error) {
     console.error("Error in createOrder:", error);
@@ -310,7 +447,8 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-//veryfayproduct
+//veryfay payment
+
 exports.verifypayment = async (req, res) => {
   try {
     const { razorpayOrderId } = req.body;
@@ -333,7 +471,7 @@ exports.orderDeatails=async (req,res)=>{
 try{
   const userId=req.userId
 
-  const orderdDeatails=await Order.find({userId, paymentStatus:"Completed"}).populate('products.productId','name place');
+  const orderdDeatails=await Order.find({userId, paymentStatus:"Completed"}).populate('products.productId');
   console.log("oderdetails",orderdDeatails);
   
   if(!orderdDeatails){
