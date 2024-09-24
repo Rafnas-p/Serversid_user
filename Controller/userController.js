@@ -140,7 +140,7 @@ exports.getproductById = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const userId=req.userId;
-    console.log(userId);
+    
     
     const { productId } = req.body;
 
@@ -196,10 +196,10 @@ exports.addToCart = async (req, res) => {
 exports.getCartItem = async (req, res) => {
   try {
     const { userId } = req.body; // Read userId from request body
-    console.log('userId received:', userId);
+  
 
     const cart = await Cart.findOne({ userId }).populate('products.productId');
-    console.log('Cart found:', cart);
+  
 
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
@@ -297,7 +297,7 @@ exports.wishliste = async (req, res) => {
       wishlist = new Wishlist({ userId: userId, products: [productObjectId] });
       await wishlist.validate(); 
       await wishlist.save();
-      console.log("new wishlist", wishlist);
+      
       return res.status(200).json({ message: "Product added to wishlist", wishlist });
     } else {
       // Filter out null values and check for the product's index
@@ -330,7 +330,7 @@ exports.getWishlist = async (req, res) => {
     const userId=req.userId;
 
     const wishlist = await Wishlist.findOne({ userId: userId }).populate("products");
-    console.log("wish", wishlist);
+    
 
     if (!wishlist) {
       return res.status(404).json({ message: "Wishlist not found" });
@@ -404,7 +404,7 @@ exports.createOrder = async (req, res) => {
         0
       )
     );
-    console.log("Total Price:", totalPrice);
+    
 
     const options = {
       amount: totalPrice * 100,
@@ -439,7 +439,11 @@ exports.createOrder = async (req, res) => {
 
     res.status(200).json({
       message: "Order created successfully",
-      order: newOrder,  
+      order: {
+        ...newOrder.toObject(),
+        paymentId: null, // Placeholder for paymentId
+      },
+      razorpayOrder: razorpayOrder, // Include Razorpay order details
     });
   } catch (error) {
     console.error("Error in createOrder:", error);
@@ -449,37 +453,73 @@ exports.createOrder = async (req, res) => {
 
 //veryfay payment
 
-exports.verifypayment = async (req, res) => {
-  try {
-    const { razorpayOrderId } = req.body;
+// exports.verifypayment = async (req, res) => {
+//   try {
+//     const { razorpayOrderId,razorpayPaymentId ,razorpaySignature  } = req.body;
 
-    const order = await Order.findOneAndUpdate(
+//     const order = await Order.findOneAndUpdate(
+//       { orderId: razorpayOrderId },
+//       {PaymentId:razorpayPaymentId},
+//       { paymentStatus: "Completed" },
+//       { new: true }
+//     );
+//     res.status(200).json({ message: "Payment verified successfully", order });
+//   } catch (error) {
+//     console.error("Error in verifyPayment:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+exports.verifypayment = async (req, res) => {
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+  // Verify the signature using the Razorpay library
+  const crypto = require('crypto');
+  const generatedSignature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+    .digest('hex');
+
+  if (generatedSignature !== razorpaySignature) {
+    return res.status(400).json({ message: "Payment verification failed" });
+  }
+
+  try {
+    // Update order status and set paymentId
+    const updatedOrder = await Order.findOneAndUpdate(
       { orderId: razorpayOrderId },
-      { paymentStatus: "Completed" },
+      { paymentId: razorpayPaymentId, paymentStatus: 'completed' },
       { new: true }
     );
-    res.status(200).json({ message: "Payment verified successfully", order });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({
+      message: "Payment verified successfully",
+      order: updatedOrder,
+    });
   } catch (error) {
-    console.error("Error in verifyPayment:", error);
+    console.error("Error verifying payment:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
 //Order details that the user purchased
 
-exports.orderDeatails=async (req,res)=>{
-try{
-  const userId=req.userId
+exports.orderDetails = async (req, res) => {
+  try {
+      const userId = req.userId;
+      console.log('userId received:', userId)
+      const orderDetails = await Order.find({ userId }).populate('products.productId');
+      console.log("orderDetails", orderDetails);
 
-  const orderdDeatails=await Order.find({userId, paymentStatus:"Completed"}).populate('products.productId');
-  console.log("oderdetails",orderdDeatails);
-  
-  if(!orderdDeatails){
-    return res.status(404).json({message:'No compleated order'})
-
+      if (!orderDetails.length) {
+          return res.status(404).json({ message: 'No completed orders' });
+      }
+      
+      res.status(200).json({ message: 'Order details retrieved successfully', orderDetails });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
   }
-res.status(200).json({message:'order details retrieved successfuly', orderdDeatails})
-}catch(error){
-res.status(500).json({ message: error.message })
-}
-}
+};

@@ -7,11 +7,11 @@ router.post("/adminlogin", adminController.admiLogin);
 router.get("/viewAllUsers",authMiddilware, adminController.viewAllUsers);
 router.get("/getUser/:userId",authMiddilware, adminController.getUserById);
 router.get("/getallProduts",authMiddilware, adminController.getAllProducts);
-router.get("/getPrByCt/:type",authMiddilware, adminController.getPrByCt);
+router.get("/getPrByCategory/:type",authMiddilware, adminController.getPrByCategory);
 router.get("/getProductById/:_id",authMiddilware, adminController.getProductById);
 router.post("/creatProduct",authMiddilware, adminController.creatProduct);
 router.delete("/deleatProduct/:id",authMiddilware, adminController.deleatProduct);
-router.post("/updateproduct/:id",authMiddilware,adminController.updateproduct);
+router.put("/updateproduct/:id",authMiddilware,adminController.updateproduct);
 router.get("/totalProductPurchased",authMiddilware,adminController.totalProductPurchased);
 router.get("/totalRevenue",authMiddilware,adminController.totalRevenue)
 router.get("/OrderDetails",authMiddilware,adminController.OrderDetails)

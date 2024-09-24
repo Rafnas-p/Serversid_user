@@ -20,7 +20,6 @@ const joiCreateProductSchema = joi.object({
   price: joi.number().required(),
   image: joi.string().required(), 
   type: joi.string().required(),
-  stars: joi.number().required().min(0).max(5)
 });
 
 module.exports = {

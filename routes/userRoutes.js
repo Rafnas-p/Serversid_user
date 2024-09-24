@@ -18,6 +18,6 @@ router.delete('/removewishlist/:productId',authMiddilware,userController.removew
 router.delete('/removeCartitem/:productId',authMiddilware,userController.removeCartitem)
 router.post('/order',authMiddilware,userController.createOrder)
 router.post('/order/verify',authMiddilware, userController.verifypayment)
-router.get('/order/deatils',authMiddilware,userController.orderDeatails)
+router.get('/order/deatils',authMiddilware,userController.orderDetails)
 
 module.exports = router;

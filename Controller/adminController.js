@@ -36,6 +36,8 @@ exports.viewAllUsers = async (req, res) => {
     if (isAdmin) {
       const users = await User.find({}, { password: 0 });
       return res.status(200).json({ users });
+    } else {
+      return res.status(403).json({ message: 'Access denied. Admins only.' });
     }
   } catch (error) {
     res.status(500).json({ message: error, error: "users not found" });
@@ -47,19 +49,21 @@ exports.viewAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
+    console.log('getUser', userId);
 
     const user = await User.findById(userId);
     console.log("user", user);
+    
     if (!user) {
-      return res.status(400).json({ message: "user Not found" });
+      return res.status(400).json({ message: "User Not found" });
     }
+    
     return res.status(200).json({ user });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "An error occurred", error: error.message });
+    res.status(500).json({ message: "An error occurred", error: error.message });
   }
 };
+
 //get all products
 
 exports.getAllProducts = async (req, res) => {
@@ -73,7 +77,7 @@ exports.getAllProducts = async (req, res) => {
 };
 //View all the products by category
 
-exports.getPrByCt = async (req, res) => {
+exports.getPrByCategory= async (req, res) => {
   try {
     const { type } = req.params;
     console.log(type);
@@ -93,27 +97,30 @@ exports.getPrByCt = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { _id } = req.params;
-    const product = await Product.findById(_id);
+    const product = await Product.findById(_id); // Fetch product by ID
     console.log(_id);
 
-    if (!Product) {
-      return res.status(404).json({ message: "product not found" });
+    if (!product) { // Check if product is found
+      return res.status(404).json({ message: "Product not found" });
     }
-    return res.status(200).json(product);
+    return res.status(200).json(product); // Return product data
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "An error occurred", error: error.message });
+    res.status(500).json({ message: "An error occurred", error: error.message });
   }
 };
+
 //Create a product
 exports.creatProduct = async (req, res) => {
   try {
-    const { error } = joiCreateProductSchema.validate(req.body);
-    if (error)
-      return res.status(404).json({ message: error.details[0].message });
+    console.log("Incoming request body:", req.body); // Log incoming data
 
-    const { name, description, price, image, type, stars } = req.body;
+    const { error } = joiCreateProductSchema.validate(req.body);
+    if (error) {
+      console.log("Validation error:", error.details[0].message); // Log validation error
+      return res.status(404).json({ message: error.details[0].message });
+    }
+
+    const { name, description, price, image, type } = req.body;
 
     const newProduct = new Product({
       name,
@@ -121,17 +128,20 @@ exports.creatProduct = async (req, res) => {
       price,
       image,
       type,
-      stars,
     });
+
     await newProduct.save();
 
+    console.log("Product created successfully:", newProduct); // Log success
     res
       .status(201)
       .json({ message: "Product created successfully", product: newProduct });
   } catch (error) {
+    console.error("Error saving product:", error.message); // Log backend error
     res.status(500).json({ message: "Failed", error: error.message });
   }
 };
+
 
 //Delete a product.
 
@@ -151,27 +161,63 @@ exports.deleatProduct = async (req, res) => {
 };
 //Update a product.
 
+// exports.updateproduct = async (req, res) => {
+//   console.log('update',req.body);
+  
+//   try {
+//     const { id } = req.params;
+//     console.log("id", id);
+
+//     const { name, description, price, image, type, stars } = req.body;
+//     const updateProduct = await Product.findOneAndUpdate(
+//       { _id: id },
+//       { name, description, price, image, type, stars },
+//       { new: true }
+//     );
+
+//     res.status(200).json({
+//       message: "Product updated successfully",
+//       product: updateProduct,
+//     });
+//     console.log("up", updateProduct);
+//   } catch (error) {
+//     res.status(500).json({ message: "Failed", error: error.message });
+//   }
+// };
+
 exports.updateproduct = async (req, res) => {
+  console.log('Request Body:', req.body); // More descriptive log
+  
   try {
-    const { id } = req.params;
-    console.log("id", id);
+    const { id } = req.params; // Assuming this is the product ID
+    console.log("Product ID:", id);
 
     const { name, description, price, image, type, stars } = req.body;
+
     const updateProduct = await Product.findOneAndUpdate(
-      { _id: id },
+      { _id: id }, // Using the id from params
       { name, description, price, image, type, stars },
-      { new: true }
+      { new: true } // Return the updated document
     );
+
+    if (!updateProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
     res.status(200).json({
       message: "Product updated successfully",
       product: updateProduct,
     });
-    console.log("up", updateProduct);
+    console.log("Updated Product:", updateProduct);
   } catch (error) {
-    res.status(500).json({ message: "Failed", error: error.message });
+    console.error("Update Error:", error); // Log error for debugging
+    res.status(500).json({ message: "Failed to update product", error: error.message });
   }
 };
+
+
+
+
 //Total products purchased.
 
 exports.totalProductPurchased = async (req, res) => {
