@@ -10,7 +10,6 @@ router.get('/products/:type',userController.productsBytype)
 router.get('/product/:productId',userController.getproductById)
 router.post('/cart/add',authMiddilware,userController.addToCart);
 router.post('/updateCartItemQuantity', authMiddilware,userController.updateCartItemQuantity);
-
 router.post('/getCartItem', authMiddilware, userController.getCartItem);
 router.post('/wishlist/add',authMiddilware,userController.wishliste)
 router.get('/gettwishlist',authMiddilware,userController.getWishlist)

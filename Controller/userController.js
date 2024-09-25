@@ -7,7 +7,7 @@ const Cart = require("../models/cartModal");
 const Wishlist = require("../models/whishlistModal");
 const Razorpay = require("razorpay");
 const Order = require("../models/oderSchema");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 // User registration
@@ -38,31 +38,6 @@ exports.register = async (req, res) => {
   }
 };
 
-//login section
-// exports.login = async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
-
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid email" });
-//     }
-
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid password" });
-//     }
-
-  
-//     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
-//     res.status(200).json({ message: "Login successful", token });
-//   } catch (error) {
-//     return res.status(500).json({ status: "failed", message: error.message });
-//   }
-// };
-
-
-
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -77,7 +52,9 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
     return res.status(200).json({
       message: "Login successful",
       token,
@@ -87,10 +64,6 @@ exports.login = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
-
-
-
 
 //getAll product
 
@@ -117,7 +90,7 @@ exports.productsBytype = async (req, res) => {
 
 exports.getproductById = async (req, res) => {
   try {
-    const { productId,  } = req.params;
+    const { productId } = req.params;
     console.log("Product ID:", productId);
 
     const product = await Product.findById(productId);
@@ -129,7 +102,7 @@ exports.getproductById = async (req, res) => {
 
     res.status(200).json(product);
   } catch (error) {
-    console.error("Error fetching product:", error); 
+    console.error("Error fetching product:", error);
     res
       .status(500)
       .json({ message: "Failed to get product", error: error.message });
@@ -139,9 +112,8 @@ exports.getproductById = async (req, res) => {
 //AdToCart
 exports.addToCart = async (req, res) => {
   try {
-    const userId=req.userId;
-    
-    
+    const userId = req.userId;
+
     const { productId } = req.body;
 
     const cart = await Cart.findOne({ userId: userId });
@@ -173,52 +145,29 @@ exports.addToCart = async (req, res) => {
 };
 
 // // get Cart item
-// exports.getCartItem = async (req, res) => {
-//   try {
-    
-//     // const { userId } = req.params;
-//     const { userId } = req.body;
-//     // Read userId from query parameters
-//     console.log('id26',userId);
-    
 
-//     const cart = await Cart.findOne({ userId }).populate("products.productId");
-//     console.log(cart);
-
-//     if (!cart) {
-//       return res.status(404).json({ message: "cart not found" });
-//     }
-//     res.status(200).json(cart.products);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 exports.getCartItem = async (req, res) => {
   try {
     const { userId } = req.body; // Read userId from request body
-  
 
-    const cart = await Cart.findOne({ userId }).populate('products.productId');
-  
+    const cart = await Cart.findOne({ userId }).populate("products.productId");
 
     if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+      return res.status(404).json({ message: "Cart not found" });
     }
     res.status(200).json(cart.products);
   } catch (error) {
-    console.error('Error fetching cart items:', error);
+    console.error("Error fetching cart items:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 //deleat cart quntyty
 
 exports.removeCartitem = async (req, res) => {
   try {
-    const userId=req.userId
+    const userId = req.userId;
     const { productId } = req.params;
-    
 
     const cart = await Cart.findOne({ userId });
     if (!cart) {
@@ -231,7 +180,7 @@ exports.removeCartitem = async (req, res) => {
     if (productIndex === -1) {
       return res.status(404).json({ message: "product not found" });
     }
-    cart.products.splice(productIndex,1);
+    cart.products.splice(productIndex, 1);
     await cart.save();
     res.status(200).json({ message: "cart item deleated successfully" });
   } catch (error) {
@@ -242,38 +191,38 @@ exports.removeCartitem = async (req, res) => {
 exports.updateCartItemQuantity = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-    
-    
-    const userId = req.userId; 
+
+    const userId = req.userId;
 
     const cart = await Cart.findOne({ userId });
 
     if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+      return res.status(404).json({ message: "Cart not found" });
     }
     // Find the product in the cart
-    const productIndex = cart.products.findIndex(item => item.productId.toString() === productId.toString());
+    const productIndex = cart.products.findIndex(
+      (item) => item.productId.toString() === productId.toString()
+    );
 
     if (productIndex === -1) {
-      return res.status(404).json({ message: 'Product not found in cart' });
+      return res.status(404).json({ message: "Product not found in cart" });
     }
 
     // Update the quantity
     cart.products[productIndex].quantity += quantity;
 
     // Save the updated cart
-    if(cart.products[productIndex].quantity>0){
-
+    if (cart.products[productIndex].quantity > 0) {
       await cart.save();
-    }else{
-      cart.products[productIndex].quantity =1
-      await cart.save()
+    } else {
+      cart.products[productIndex].quantity = 1;
+      await cart.save();
     }
 
-    res.status(200).json({ message: 'Cart item updated successfully', cart });
+    res.status(200).json({ message: "Cart item updated successfully", cart });
   } catch (error) {
-    console.error('Error updating cart item quantity:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error updating cart item quantity:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -281,56 +230,59 @@ exports.updateCartItemQuantity = async (req, res) => {
 exports.wishliste = async (req, res) => {
   try {
     const userId = req.userId;
-    
-    
+
     const { productId } = req.body;
     if (!productId) {
       return res.status(400).json({ message: "Product ID is required." });
     }
-    
-    
+
     const productObjectId = new mongoose.Types.ObjectId(productId);
     let wishlist = await Wishlist.findOne({ userId: userId });
-  
-    
+
     if (!wishlist) {
       wishlist = new Wishlist({ userId: userId, products: [productObjectId] });
-      await wishlist.validate(); 
+      await wishlist.validate();
       await wishlist.save();
-      
-      return res.status(200).json({ message: "Product added to wishlist", wishlist });
+
+      return res
+        .status(200)
+        .json({ message: "Product added to wishlist", wishlist });
     } else {
       // Filter out null values and check for the product's index
-      const productIndex = wishlist.products.filter(product => product !== null).findIndex((product) => product.equals(productObjectId));
+      const productIndex = wishlist.products
+        .filter((product) => product !== null)
+        .findIndex((product) => product.equals(productObjectId));
 
       if (productIndex !== -1) {
         wishlist.products.splice(productIndex, 1); // Remove the product
         await wishlist.save();
-        return res.status(200).json({ message: "Product removed from wishlist", wishlist });
+        return res
+          .status(200)
+          .json({ message: "Product removed from wishlist", wishlist });
       } else {
         wishlist.products.push(productObjectId); // Add the product
       }
     }
 
-    await wishlist.save(); // Save the updated wishlist
-    console.log('updated wishlist', wishlist);
-    
+    await wishlist.save();
+    console.log("updated wishlist", wishlist);
+
     res.status(200).json({ message: "Product added to wishlist", wishlist });
   } catch (error) {
-    console.error('Error updating wishlist:', error);
+    console.error("Error updating wishlist:", error);
     res.status(500).json({ message: "Error updating wishlist", error });
   }
-}
-
+};
 
 //get wishlist items
 
 exports.getWishlist = async (req, res) => {
   try {
-    const userId=req.userId;
+    const userId = req.userId;
 
-    const wishlist = await Wishlist.findOne({ userId: userId }).populate("products");
-    
+    const wishlist = await Wishlist.findOne({ userId: userId }).populate(
+      "products"
+    );
 
     if (!wishlist) {
       return res.status(404).json({ message: "Wishlist not found" });
@@ -344,39 +296,35 @@ exports.getWishlist = async (req, res) => {
 exports.removewishlist = async (req, res) => {
   try {
     const userId = req.userId;
-    
-    
+
     const { productId } = req.params;
 
     // Find the wishlist by userId
     const wishlist = await Wishlist.findOne({ userId });
-    
+
     if (!wishlist) {
       return res.status(404).json({ message: "Wishlist not found" });
     }
 
-    // Find the index of the product in the wishlist products array
-    const productIndex = wishlist.products.findIndex((product) => 
-      product.equals(productId)  // Compare productId, not wishlist id
+    const productIndex = wishlist.products.findIndex((product) =>
+      product.equals(productId)
     );
 
     if (productIndex === -1) {
       return res.status(404).json({ message: "Product not found in wishlist" });
     }
 
-    // Remove the product from the wishlist
     wishlist.products.splice(productIndex, 1);
 
-    // Save the updated wishlist
     await wishlist.save();
 
-    return res.status(200).json({ message: "Wishlist item deleted successfully" });
+    return res
+      .status(200)
+      .json({ message: "Wishlist item deleted successfully" });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
-
-
 
 //creat order
 exports.createOrder = async (req, res) => {
@@ -386,8 +334,8 @@ exports.createOrder = async (req, res) => {
   });
 
   try {
-    const userId=req.userId
-    const {  name, place, phone, address } = req.body;
+    const userId = req.userId;
+    const { name, place, phone, address } = req.body;
 
     const cart = await Cart.findOne({ userId })
       .populate("products.productId")
@@ -404,7 +352,6 @@ exports.createOrder = async (req, res) => {
         0
       )
     );
-    
 
     const options = {
       amount: totalPrice * 100,
@@ -419,15 +366,17 @@ exports.createOrder = async (req, res) => {
       return res.status(500).json({ message: "Error creating Razorpay order" });
     }
 
+    const totalQuantity = cart.products.reduce(
+      (acc, item) => acc + item.quantity,
+      0
+    );
+
     const newOrder = new Order({
       userId,
       products: cart.products,
       totalPrice,
       totalItem: cart.products.length,
-      totalQuantity: cart.products.reduce(
-        (acc, item) => acc + item.quantity,
-        0
-      ),
+      totalQuantity: totalQuantity,
       purchaseDate: Date.now(),
       orderId: razorpayOrder.id,
       paymentStatus: "pending",
@@ -441,9 +390,9 @@ exports.createOrder = async (req, res) => {
       message: "Order created successfully",
       order: {
         ...newOrder.toObject(),
-        paymentId: null, // Placeholder for paymentId
+        paymentId: null,
       },
-      razorpayOrder: razorpayOrder, // Include Razorpay order details
+      razorpayOrder: razorpayOrder,
     });
   } catch (error) {
     console.error("Error in createOrder:", error);
@@ -451,43 +400,23 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-//veryfay payment
-
-// exports.verifypayment = async (req, res) => {
-//   try {
-//     const { razorpayOrderId,razorpayPaymentId ,razorpaySignature  } = req.body;
-
-//     const order = await Order.findOneAndUpdate(
-//       { orderId: razorpayOrderId },
-//       {PaymentId:razorpayPaymentId},
-//       { paymentStatus: "Completed" },
-//       { new: true }
-//     );
-//     res.status(200).json({ message: "Payment verified successfully", order });
-//   } catch (error) {
-//     console.error("Error in verifyPayment:", error);
-//     res.status(500).json({ message: error.message });
-//   }
-// };
 exports.verifypayment = async (req, res) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
-  // Verify the signature using the Razorpay library
-  const crypto = require('crypto');
+  const crypto = require("crypto");
   const generatedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-    .digest('hex');
+    .digest("hex");
 
   if (generatedSignature !== razorpaySignature) {
     return res.status(400).json({ message: "Payment verification failed" });
   }
 
   try {
-    // Update order status and set paymentId
     const updatedOrder = await Order.findOneAndUpdate(
       { orderId: razorpayOrderId },
-      { paymentId: razorpayPaymentId, paymentStatus: 'completed' },
+      { paymentId: razorpayPaymentId, paymentStatus: "completed" },
       { new: true }
     );
 
@@ -505,21 +434,23 @@ exports.verifypayment = async (req, res) => {
   }
 };
 
-//Order details that the user purchased
-
 exports.orderDetails = async (req, res) => {
   try {
-      const userId = req.userId;
-      console.log('userId received:', userId)
-      const orderDetails = await Order.find({ userId }).populate('products.productId');
-      console.log("orderDetails", orderDetails);
+    const userId = req.userId;
+    console.log("userId received:", userId);
+    const orderDetails = await Order.find({ userId }).populate(
+      "products.productId"
+    );
+    console.log("orderDetails", orderDetails);
 
-      if (!orderDetails.length) {
-          return res.status(404).json({ message: 'No completed orders' });
-      }
-      
-      res.status(200).json({ message: 'Order details retrieved successfully', orderDetails });
+    if (!orderDetails.length) {
+      return res.status(404).json({ message: "No completed orders" });
+    }
+
+    res
+      .status(200)
+      .json({ message: "Order details retrieved successfully", orderDetails });
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };

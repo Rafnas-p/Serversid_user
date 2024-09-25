@@ -49,10 +49,10 @@ exports.viewAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
-    console.log('getUser', userId);
+    
 
     const user = await User.findById(userId);
-    console.log("user", user);
+    
     
     if (!user) {
       return res.status(400).json({ message: "User Not found" });
@@ -75,7 +75,7 @@ exports.getAllProducts = async (req, res) => {
     res.status(500).json({ message: "product not found", error: error });
   }
 };
-//View all the products by category
+
 
 exports.getPrByCategory= async (req, res) => {
   try {
@@ -97,13 +97,13 @@ exports.getPrByCategory= async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { _id } = req.params;
-    const product = await Product.findById(_id); // Fetch product by ID
+    const product = await Product.findById(_id); 
     console.log(_id);
 
-    if (!product) { // Check if product is found
+    if (!product) { 
       return res.status(404).json({ message: "Product not found" });
     }
-    return res.status(200).json(product); // Return product data
+    return res.status(200).json(product); 
   } catch (error) {
     res.status(500).json({ message: "An error occurred", error: error.message });
   }
@@ -112,8 +112,7 @@ exports.getProductById = async (req, res) => {
 //Create a product
 exports.creatProduct = async (req, res) => {
   try {
-    console.log("Incoming request body:", req.body); // Log incoming data
-
+  
     const { error } = joiCreateProductSchema.validate(req.body);
     if (error) {
       console.log("Validation error:", error.details[0].message); // Log validation error
@@ -161,35 +160,11 @@ exports.deleatProduct = async (req, res) => {
 };
 //Update a product.
 
-// exports.updateproduct = async (req, res) => {
-//   console.log('update',req.body);
-  
-//   try {
-//     const { id } = req.params;
-//     console.log("id", id);
-
-//     const { name, description, price, image, type, stars } = req.body;
-//     const updateProduct = await Product.findOneAndUpdate(
-//       { _id: id },
-//       { name, description, price, image, type, stars },
-//       { new: true }
-//     );
-
-//     res.status(200).json({
-//       message: "Product updated successfully",
-//       product: updateProduct,
-//     });
-//     console.log("up", updateProduct);
-//   } catch (error) {
-//     res.status(500).json({ message: "Failed", error: error.message });
-//   }
-// };
-
 exports.updateproduct = async (req, res) => {
-  console.log('Request Body:', req.body); // More descriptive log
+  console.log('Request Body:', req.body); 
   
   try {
-    const { id } = req.params; // Assuming this is the product ID
+    const { id } = req.params; 
     console.log("Product ID:", id);
 
     const { name, description, price, image, type, stars } = req.body;
@@ -297,21 +272,29 @@ exports.OrderDetails = async (req, res) => {
 //oder details by user
 exports.orderDeatailsByUser = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const orders = await Order.find({
+    const { userId } = req.params; 
+    console.log('userId received:', userId);
+    
+   
+    const orders = await Order.find({ 
       userId,
-      paymentStatus: "Completed",
+      paymentStatus: "completed", 
     }).populate({
       path: "products.productId",
       select: "name description price image category stars",
     });
-    console.log("orde", orders);
-    if (!orders || orders.length === 0) {
+    
+    console.log("Orders found:", orders); 
+
+    
+    if (!orders) {
       return res.status(404).json({ message: "Order details not found" });
     }
 
-    return res.status(200).json(orders);
+    return res.status(200).json(orders); 
+    
   } catch (error) {
+    console.error("Error fetching orders:", error); 
     return res.status(500).json({ message: error.message, error: error });
   }
 };
