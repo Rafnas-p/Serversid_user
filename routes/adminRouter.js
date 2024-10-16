@@ -16,4 +16,5 @@ router.get("/totalProductPurchased",authMiddilware,adminController.totalProductP
 router.get("/totalRevenue",authMiddilware,adminController.totalRevenue)
 router.get("/OrderDetails",authMiddilware,adminController.OrderDetails)
 router.get("/orderDeatailsByUser/:userId",authMiddilware,adminController.orderDeatailsByUser)
+
 module.exports = router;

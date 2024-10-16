@@ -8,6 +8,7 @@ const Wishlist = require("../models/whishlistModal");
 const Razorpay = require("razorpay");
 const Order = require("../models/oderSchema");
 const mongoose = require("mongoose");
+const { log } = require("console");
 require("dotenv").config();
 
 // User registration
@@ -248,19 +249,19 @@ exports.wishliste = async (req, res) => {
         .status(200)
         .json({ message: "Product added to wishlist", wishlist });
     } else {
-      // Filter out null values and check for the product's index
+      
       const productIndex = wishlist.products
         .filter((product) => product !== null)
         .findIndex((product) => product.equals(productObjectId));
 
       if (productIndex !== -1) {
-        wishlist.products.splice(productIndex, 1); // Remove the product
+        wishlist.products.splice(productIndex, 1); 
         await wishlist.save();
         return res
           .status(200)
           .json({ message: "Product removed from wishlist", wishlist });
       } else {
-        wishlist.products.push(productObjectId); // Add the product
+        wishlist.products.push(productObjectId); 
       }
     }
 
@@ -403,12 +404,14 @@ exports.createOrder = async (req, res) => {
 exports.verifypayment = async (req, res) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
+
   const crypto = require("crypto");
   const generatedSignature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest("hex");
-
+    
+    
   if (generatedSignature !== razorpaySignature) {
     return res.status(400).json({ message: "Payment verification failed" });
   }
@@ -441,7 +444,7 @@ exports.orderDetails = async (req, res) => {
     const orderDetails = await Order.find({ userId }).populate(
       "products.productId"
     );
-    console.log("orderDetails", orderDetails);
+    
 
     if (!orderDetails.length) {
       return res.status(404).json({ message: "No completed orders" });
