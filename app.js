@@ -12,7 +12,7 @@ connectDB();
 
 // Middleware to parse JSON requests
 app.use(express.json());
-app.use(cors({ origin: 'https://e-comerce-shoe.vercel.app',  
+app.use(cors({ origin: 'https://e-comerce-shoe.vercel.app/',  
   credentials: true,                
   methods: ['GET', 'POST', 'PUT', 'DELETE'],  
   allowedHeaders: ['Content-Type', 'Authorization']  
