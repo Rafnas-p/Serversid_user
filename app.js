@@ -14,12 +14,7 @@ connectDB();
 
 app.use(express.json());
 app.use(
-  cors({
-    origin: "https://e-comerce-shoe.vercel.app",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-      credentials: true,
-  })
+  cors()
 );
 
 
