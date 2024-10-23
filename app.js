@@ -12,17 +12,17 @@ connectDB();
 // Middleware to parse JSON requests
 app.use(express.json());
 
-// Use CORS middleware to allow only the frontend origin
+// Configure CORS to allow the frontend origin
 app.use(
   cors({
     origin: "https://e-comerce-shoe.vercel.app",  // Allow only your frontend
-    credentials: true,  // Enable cookies and authorization headers
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  
+    credentials: true,  // Allow sending cookies and authorization headers
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Handle preflight requests
+// Handle preflight requests (OPTIONS)
 app.options("*", cors());
 
 // Define routes
