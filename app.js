@@ -18,7 +18,7 @@ app.use(
     origin: "https://e-comerce-shoe.vercel.app",  // Allow only your frontend
     credentials: true,  // Enable cookies and authorization headers
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  
   })
 );
 
