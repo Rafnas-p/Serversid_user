@@ -17,8 +17,8 @@ app.use(
   cors({
     origin: "https://e-comerce-shoe.vercel.app",
     credentials: true,
-    // methods: ["GET", "POST", "PUT", "DELETE"],
-    // allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
