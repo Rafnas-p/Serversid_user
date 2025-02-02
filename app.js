@@ -15,7 +15,7 @@ app.use(express.json());
 
 
 const corsOptions = {
-  origin: "https://e-comerce-shoe.vercel.app" , origin: "*",origin: 'http://localhost:3000',
+  origin: "https://e-comerce-shoe.vercel.app" ,
   credentials: true,  
 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
