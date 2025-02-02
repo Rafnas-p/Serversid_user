@@ -150,6 +150,7 @@ exports.addToCart = async (req, res) => {
 exports.getCartItem = async (req, res) => {
   try {
     const { userId } = req.body; // Read userId from request body
+console.log('cart',userId);
 
     const cart = await Cart.findOne({ userId }).populate("products.productId");
 
